@@ -3,8 +3,8 @@ import http from "../http";
 import { AccountingPlanRequestType, AccountingPlanResponseType } from "./account.types";
 
 
-const createAccountingPlanRequest = (data: AccountingPlanRequestType) =>
-    http.post('accounting-plan', { code: data.code, name: data.name });
+const createAccountingPlanRequest = (data: AccountingPlanRequestType[]) =>
+    http.post('accounting-plan', data);
 
 export const useCreateAccountingPlan = () =>
     useMutation({
