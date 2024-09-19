@@ -3,8 +3,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import { CustomTable, CustomColumn } from '@/components/core/custom-table';
 import { useGetAccountingPlan, useCreateAccountingPlan } from '@/api/accounting_plan/accountRequest';
-import { AccountingPlanRequestType,  AccountingPlanResponseType} from '@/api/accounting_plan/account.types';
-import { UseQueryResult } from 'react-query';
+import { AccountingPlanRequestType, AccountingPlanResponseType } from '@/api/accounting_plan/account.types';
 
 // Definimos AccountingPlanRow para que coincida con AccountingPlanResponseType
 type AccountingPlanRow = AccountingPlanResponseType;
@@ -19,20 +18,26 @@ export function Page(): React.JSX.Element {
   const createAccountingPlan = useCreateAccountingPlan();
 
   const saveNewRows = async (newRows: Partial<AccountingPlanRow>[]) => {
-    for (const row of newRows) {
-      // Asegúrate de que los campos requeridos estén presentes
-      if (row.code && row.name) {
-        const newRow: AccountingPlanRequestType = {
-          code: row.code,
-          name: row.name,
-          // Añade aquí otros campos requeridos si los hay
-        };
-        await createAccountingPlan.mutateAsync(newRow);
-      } else {
-        console.error('Missing required fields in row:', row);
+    // Creamos un array con las filas válidas
+    const rowsToSave: AccountingPlanRequestType[] = newRows
+      .filter(row => row.code?.trim() && row.name?.trim()) // Filtramos las filas que tengan los campos requeridos
+      .map(row => ({
+        code: row.code!,
+        name: row.name!,
+        // Añade aquí otros campos si son necesarios
+      }));
+
+    if (rowsToSave.length > 0) {
+      try {
+        // Pasamos el array de filas válidas a mutateAsync
+        await createAccountingPlan.mutateAsync(rowsToSave);
+        console.log('Saved rows:', rowsToSave);
+      } catch (error) {
+        console.error('Error saving rows:', error);
       }
+    } else {
+      console.error('No valid rows to save');
     }
-    console.log('Saving new rows:', newRows);
   };
 
   return (
@@ -48,7 +53,7 @@ export function Page(): React.JSX.Element {
         <CustomTable<AccountingPlanRow>
           columns={columns}
           title="Accounting Plan"
-          fetchData={useGetAccountingPlan as () => UseQueryResult<AccountingPlanRow[], unknown>}
+          fetchData={useGetAccountingPlan}
           onSaveNewRows={saveNewRows}
           editableFields={['code', 'name']}
           visibleFields={['code', 'name', 'createdAt']}
