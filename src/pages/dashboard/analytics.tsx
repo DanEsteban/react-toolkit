@@ -11,6 +11,7 @@ import { addFetchedRows, addRow, updateRow } from '@/state/slices/tableSlice';
 import { v4 as uuidv4 } from 'uuid';
 import { useCreateAccountingPlan, useGetAccountingPlan } from '@/api/accounting_plan/accountRequest';
 import { Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
+import { CustomTable } from '@/components/core/custom-table';
 
 
 interface Accounting {
@@ -21,46 +22,15 @@ interface Accounting {
 
 export function Page(): React.JSX.Element {
 
-  //const { mutateAsync: save_data } = useCreateAccountingPlan();
-
-  // Estado local para manejar filas vacías
   const [localRows, setLocalRows] = useState<Accounting[]>([]);
 
-  // Usar React Query para obtener los datos
-  const { data: fetchedRows = [], isLoading, isError, error } = useGetAccountingPlan();
+  const { data: fetchedRows = [], isLoading, isError, error, refetch } = useGetAccountingPlan();
 
-  // React.useEffect(() => {
-  //   if (fetchedRows) {
-  //     dispatch(addFetchedRows(fetchedRows)); // Use new action to add fetched rows
-  //   }
-  // }, [fetchedRows, dispatch]);
-
-  // const columns = [
-  //   {
-  //     field: 'code',
-  //     name: 'Code',
-  //     formatter: (row: Row, index: number) => (
-  //       <input
-  //         type="text"
-  //         value={row.code || ''}
-  //         onChange={(e) => handleChange(e, index, 'code')}
-  //       />
-  //     ),
-  //     width: '150px',
-  //   },
-  //   {
-  //     field: 'name',
-  //     name: 'Name',
-  //     formatter: (row: Row, index: number) => (
-  //       <input
-  //         type="text"
-  //         value={row.name || ''}
-  //         onChange={(e) => handleChange(e, index, 'name')}
-  //       />
-  //     ),
-  //     width: '250px',
-  //   },
-  // ] satisfies ColumnDef<Row>[];
+  const columns = [
+    { name: 'ID', field: 'id' },
+    { name: 'Codigo', field: 'code' },
+    { name: 'Nombre', field: 'name' },
+  ];
 
   const addEmptyRow = () => {
     setLocalRows((prevRows) => [
@@ -80,7 +50,8 @@ export function Page(): React.JSX.Element {
         await save_data(validRows);
         console.log('Data saved successfully');
         // Resetear las filas locales si se guardaron correctamente
-        //setLocalRows([]);
+      setLocalRows([]);
+      await refetch();
       } catch (error) {
         // Manejar errores aquí
         console.error("Error al guardar:", error);
@@ -138,23 +109,10 @@ export function Page(): React.JSX.Element {
         }}
       >
         <Stack spacing={4}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ alignItems: 'flex-start' }}>
-            <Box sx={{ flex: '1 1 auto' }}>
-              <Typography variant="h4">Analytics</Typography>
-            </Box>
-            <div>
-              <Button startIcon={<PlusIcon />} variant="contained" onClick={addEmptyRow}>
-                Add Row
-              </Button>
-            </div>
-          </Stack>
           <Box sx={{ p: 3 }}>
             <Typography variant="h5">Plan de Cuentas</Typography>
-            {/* <DataTable<Row>
-              columns={columns}
-              rows={rows}
-            /> */}
-            <Table>
+            <CustomTable columns={columns} rows={fetchedRows.map(row => ({ ...row }))} title='Analytics' isAddButtonInHeader />
+            {/* <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
@@ -163,7 +121,6 @@ export function Page(): React.JSX.Element {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {/* Mapeamos los datos obtenidos de la API */}
                 {fetchedRows.map((accounting) => (
                   <TableRow key={accounting.id}>
                     <TableCell>{accounting.id}</TableCell>
@@ -172,7 +129,6 @@ export function Page(): React.JSX.Element {
                   </TableRow>
                 ))}
 
-                {/* Mapeamos las filas vacías locales */}
                 {localRows.map((accounting, index) => (
                   <TableRow key={`empty-${index}`}>
                     <TableCell>{accounting.id !== null ? accounting.id : '---'}</TableCell>
@@ -191,7 +147,7 @@ export function Page(): React.JSX.Element {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </Table> */}
             <Button variant="contained" onClick={handleSubmit} sx={{ mt: 2 }}>
               Save to Database
             </Button>
