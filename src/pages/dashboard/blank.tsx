@@ -26,7 +26,7 @@ export function Page(): React.JSX.Element {
   );
 }
 
-const regexCodigo = /^\d+(\.\d+)*$/;
+const regexCodigo = /^\d+(\.\d+)?\.$/;
 
 const PlanCuentasContable: React.FC = () => {
   const [nuevaCuenta, setNuevaCuenta] = useState<AccountingPlanRequestType>({ code: '', name: '' });
