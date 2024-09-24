@@ -3,13 +3,8 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { DataTable, type ColumnDef } from '@/components/core/data-table';
 import { Plus as PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '@/state/store';
-import { addFetchedRows, addRow, updateRow } from '@/state/slices/tableSlice';
-import { v4 as uuidv4 } from 'uuid';
-import { useCreateAccountingPlan, useGetAccountingPlan } from '@/api/accounting_plan/accountRequest';
+// import { useCreateAccountingPlan, useGetAccountingPlan } from '@/api/accounting_plan/accountRequest';
 import { Table, TableBody, TableCell, TableHead, TableRow, TextField } from '@mui/material';
 
 
@@ -21,47 +16,15 @@ interface Accounting {
 
 export function Page(): React.JSX.Element {
 
-  //const { mutateAsync: save_data } = useCreateAccountingPlan();
 
   // Estado local para manejar filas vacías
-  const [localRows, setLocalRows] = useState<Accounting[]>([]);
+  // const [localRows, setLocalRows] = useState<Accounting[]>([]);
+  // // Usar React Query para obtener los datos
+  // const { data: fetchedRows = [], isLoading, isError, error } = useGetAccountingPlan();
+  // // Usar React Query para guardar los datos en la base de datos.
+  // const { mutateAsync: save_data } = useCreateAccountingPlan();
 
-  // Usar React Query para obtener los datos
-  const { data: fetchedRows = [], isLoading, isError, error } = useGetAccountingPlan();
-
-  // React.useEffect(() => {
-  //   if (fetchedRows) {
-  //     dispatch(addFetchedRows(fetchedRows)); // Use new action to add fetched rows
-  //   }
-  // }, [fetchedRows, dispatch]);
-
-  // const columns = [
-  //   {
-  //     field: 'code',
-  //     name: 'Code',
-  //     formatter: (row: Row, index: number) => (
-  //       <input
-  //         type="text"
-  //         value={row.code || ''}
-  //         onChange={(e) => handleChange(e, index, 'code')}
-  //       />
-  //     ),
-  //     width: '150px',
-  //   },
-  //   {
-  //     field: 'name',
-  //     name: 'Name',
-  //     formatter: (row: Row, index: number) => (
-  //       <input
-  //         type="text"
-  //         value={row.name || ''}
-  //         onChange={(e) => handleChange(e, index, 'name')}
-  //       />
-  //     ),
-  //     width: '250px',
-  //   },
-  // ] satisfies ColumnDef<Row>[];
-
+  
   const addEmptyRow = () => {
     setLocalRows((prevRows) => [
       ...prevRows,
@@ -69,7 +32,13 @@ export function Page(): React.JSX.Element {
     ]);
   };
 
-  const { mutateAsync: save_data } = useCreateAccountingPlan();
+  const handleChange = (index: number, field: keyof Omit<Accounting, 'id'>) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalRows((prevRows) =>
+      prevRows.map((row, i) =>
+        i === index ? { ...row, [field]: e.target.value } : row
+      )
+    );
+  };
 
   const handleSubmit = async () => {
     const validRows = localRows.filter(row => row.code && row.name);
@@ -87,43 +56,7 @@ export function Page(): React.JSX.Element {
       }
     }
   }
-
-  const handleChange = (index: number, field: keyof Omit<Accounting, 'id'>) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalRows((prevRows) =>
-      prevRows.map((row, i) =>
-        i === index ? { ...row, [field]: e.target.value } : row
-      )
-    );
-  };
   
-
-
-  // const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, field: keyof Row) => {
-  //   dispatch(updateRow({ index, field, value: e.target.value }));
-  // };
-
-  // const handleAddRow = () => {
-  //   dispatch(addRow({ id: uuidv4(), code: '', name: '', isNew: true }));
-  // };
-
-  // const handleSubmit = async () => {
-  //   try {
-  //     // Filter only new or edited rows
-  //     const newOrEditedRows = rows.filter(row => row.isNew || row.isEdited);
-
-  //     // Remove the `id`, `isNew`, and `isEdited` fields
-  //     const sanitizedRows = newOrEditedRows.map(({ id, isNew, isEdited, ...rest }) => rest);
-
-  //     console.log(sanitizedRows);
-
-  //     // Save only the sanitized rows
-  //     await Promise.all(sanitizedRows.map(row => save_data(row)));
-  //     console.log('Data saved successfully');
-  //   } catch (error) {
-  //     console.error('Error saving data:', error);
-  //   }
-  // };
-
   if (isLoading) return <Typography>Cargando...</Typography>;
   if (isError) return <Typography>Error: {error instanceof Error ? error.message : 'Unknown error'}</Typography>;
 
@@ -150,10 +83,6 @@ export function Page(): React.JSX.Element {
           </Stack>
           <Box sx={{ p: 3 }}>
             <Typography variant="h5">Plan de Cuentas</Typography>
-            {/* <DataTable<Row>
-              columns={columns}
-              rows={rows}
-            /> */}
             <Table>
               <TableHead>
                 <TableRow>
