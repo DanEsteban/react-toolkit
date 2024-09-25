@@ -11,9 +11,18 @@ type AccountingPlanRow = AccountingPlanResponseType;
 
 export function Page(): React.JSX.Element {
   const columns: CustomColumn<AccountingPlanRow>[] = [
-    { name: 'Code', field: 'code' },
-    { name: 'Name', field: 'name' },
-    { name: 'Created_At', field: 'createdAt' },
+    {
+      name: 'Code', field: 'code',
+      type: 'string'
+    },
+    {
+      name: 'Name', field: 'name',
+      type: 'string'
+    },
+    {
+      name: 'Created_At', field: 'createdAt',
+      type: 'string'
+    },
   ];
 
   const createAccountingPlan = useCreateAccountingPlan();

@@ -12,10 +12,11 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
-  TablePagination, // Importar TablePagination
+  TablePagination,
+  IconButton, // Importar TablePagination
 } from '@mui/material';
-import { Plus as PlusIcon } from '@phosphor-icons/react';
-import { useGetAccountingPlan, useCreateAccountingPlan } from '@/api/accounting_plan/accountRequest';
+import { Pencil, Plus as PlusIcon, Trash } from '@phosphor-icons/react';
+import { useGetAccountingPlan, useCreateAccountingPlan, useUpdateAccountingPlan, useDeleteAccountingPlan } from '@/api/accounting_plan/accountRequest';
 import { AccountingPlanRequestType, AccountingPlanResponseType } from '@/api/accounting_plan/account.types';
 
 export function Page(): React.JSX.Element {
@@ -26,10 +27,42 @@ export function Page(): React.JSX.Element {
   );
 }
 
-const regexCodigo = /^\d+(\.\d+)?\.$/;
+const validateCode = (code: string): boolean => {
+  const regex = /^\d+(\.\d*)?$/;
+  return regex.test(code);
+};
+
+const checkCodeIsRepetead = (code: string, accounts: AccountingPlanResponseType[]): boolean => {
+  const currentCode = code.split('.');
+  const isRepeated = accounts.some((account) => {
+    const accountCode = account.code.split('.');
+
+    if(accountCode.length === 1 && currentCode.length === 1 && accountCode[0] === currentCode[0]) {
+      return true;
+    }
+
+    if(accountCode.length === 2 && currentCode.length === 1 && accountCode[0] === currentCode[0]) {
+      return true;
+    }
+
+    if(accountCode.length === 3 && currentCode.length === 3 && accountCode[2] === currentCode[2]) {
+      return true;
+    }
+
+    if(accountCode.length === 4 && currentCode.length === 3 && accountCode[2] === currentCode[2]) {
+      return true;
+    }
+
+    return false;
+  });
+  return isRepeated;
+}
 
 const PlanCuentasContable: React.FC = () => {
   const [nuevaCuenta, setNuevaCuenta] = useState<AccountingPlanRequestType>({ code: '', name: '' });
+  const [editingAccountId, setEditingAccountId] = useState<number | null>(null);
+  const [editingAccountCode, setEditingAccountCode] = useState<string | null>(null);
+  const [editingAccountName, setEditingAccountName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -40,6 +73,8 @@ const PlanCuentasContable: React.FC = () => {
   const { data: cuentas, isLoading, isError, refetch } = useGetAccountingPlan(page + 1, rowsPerPage);  // La paginación del backend comienza en 1
 
   const createAccountingPlan = useCreateAccountingPlan();
+  const updateAccountingPlan = useUpdateAccountingPlan();
+  const deleteAccountingPlan = useDeleteAccountingPlan();
 
   const handlePageChange = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -51,9 +86,9 @@ const PlanCuentasContable: React.FC = () => {
   };
 
   const agregarCuenta = async () => {
-    if (!regexCodigo.test(nuevaCuenta.code)) {
-      setError('El código no sigue el formato permitido. Por favor, use el formato 1, 1.1, 1.1.1, etc.');
-      setNuevaCuenta((prev) => ({ ...prev, code: '' })); // Vaciar el campo de código
+    if (!validateCode(nuevaCuenta.code)) {
+      setError('El código solo debe contener números y puntos.');
+      setNuevaCuenta((prev) => ({ ...prev, code: '' }));
       return;
     }
 
@@ -79,28 +114,115 @@ const PlanCuentasContable: React.FC = () => {
     }
   };
 
+  const startEditingAccount = (account: AccountingPlanResponseType) => {
+    setEditingAccountId(account.id);
+    setEditingAccountCode(account.code);
+    setEditingAccountName(account.name);
+  };
+
+  const cancelEditingAccount = () => {
+    setEditingAccountId(null);
+    setEditingAccountCode(null);
+    setEditingAccountName(null);
+  };
+
+  const guardarCambiosCuenta = async () => {
+    if (editingAccountCode === null || editingAccountName === null) return;
+
+    if (!validateCode(editingAccountCode)) {
+      setError('El código solo debe contener números y puntos.');
+      return;
+    }
+
+    try {
+      await updateAccountingPlan.mutateAsync({ id: editingAccountId!, data: { code: editingAccountCode, name: editingAccountName } });
+      cancelEditingAccount();
+      setSuccess('Cambios guardados exitosamente.');
+      refetch();
+    } catch (error) {
+      setError('Error al actualizar la cuenta');
+    }
+  };
+
+  const eliminarCuenta = async (account: AccountingPlanResponseType) => {
+    try {
+      await deleteAccountingPlan.mutateAsync(account.code);
+      setSuccess('Cuenta eliminada exitosamente.');
+      refetch();
+    } catch (error) {
+      setError('Error al eliminar la cuenta');
+    }
+  };
+
   const calcularNivel = (codigo: string): number => {
     return codigo.split('.').length - 1;
   };
 
-  const renderCuenta = (cuenta: AccountingPlanResponseType) => (
-    <TableRow key={cuenta.id}>
-      <TableCell sx={{ paddingLeft: `${calcularNivel(cuenta.code) * 20}px` }}>
-        <TextField
-          value={cuenta.code}
-          variant="standard"
-          fullWidth
-        />
-      </TableCell>
-      <TableCell>
-        <TextField
-          value={cuenta.name}
-          variant="standard"
-          fullWidth
-        />
-      </TableCell>
-    </TableRow>
-  );
+
+  const renderCuenta = (cuenta: AccountingPlanResponseType) => {
+    const isEditing = editingAccountId === cuenta.id;
+
+    return (
+      <TableRow key={cuenta.id}>
+        <TableCell sx={{ paddingLeft: `${calcularNivel(cuenta.code) * 20}px` }}>
+          {isEditing ? (
+            <TextField
+              value={editingAccountCode || ''}
+              onChange={(e) => setEditingAccountCode(e.target.value)}
+              variant="standard"
+              fullWidth
+              error={!!error}
+            />
+          ) : (
+            <TextField
+              value={cuenta.code}
+              variant="standard"
+              fullWidth
+              onClick={() => startEditingAccount(cuenta)}
+            />
+          )}
+        </TableCell>
+        <TableCell>
+          {isEditing ? (
+            <TextField
+              value={editingAccountName || ''}
+              onChange={(e) => setEditingAccountName(e.target.value)}
+              variant="standard"
+              fullWidth
+            />
+          ) : (
+            <TextField
+              value={cuenta.name}
+              variant="standard"
+              fullWidth
+              onClick={() => startEditingAccount(cuenta)}
+            />
+          )}
+        </TableCell>
+        <TableCell>
+          {isEditing ? (
+            <>
+              <IconButton onClick={guardarCambiosCuenta}>
+                <Pencil size={20} />
+              </IconButton>
+              <IconButton onClick={cancelEditingAccount}>
+                <Trash size={20} />
+              </IconButton>
+            </>
+          ) : (
+            <>
+              <IconButton onClick={() => startEditingAccount(cuenta)}>
+                <Pencil size={20} />
+              </IconButton>
+              <IconButton onClick={() => eliminarCuenta(cuenta)}>
+                <Trash size={20} />
+              </IconButton>
+            </>
+          )}
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   if (isLoading) return <CircularProgress />;
   if (isError) return <Typography color="error">Error al cargar las cuentas</Typography>;
