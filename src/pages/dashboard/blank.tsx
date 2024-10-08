@@ -7,10 +7,13 @@ import { useAccounts, useAddAccount, useUpdateAccount } from '@/api/accounting_p
 
 import { Account } from '@/api/accounting_plan/account.types';
 import { CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
+import { PencilSimple as PencilSimpleIcon } from '@phosphor-icons/react/dist/ssr/PencilSimple';
+import { FloppyDisk as FloppyDiskIcon } from '@phosphor-icons/react/dist/ssr/FloppyDisk';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 
 export function Page(): React.JSX.Element {
-  const { data: accounts = [], isLoading, isError } = useAccounts();
+  const { data: accounts = [], isLoading, isError } = useAccounts(0, 100);
   const { mutate: addAccount } = useAddAccount();
   const { mutate: updateAccount } = useUpdateAccount(); // Mutación para actualizar cuenta
 
@@ -26,7 +29,7 @@ export function Page(): React.JSX.Element {
       const regex = /^[0-9.]*$/;
       if (regex.test(value)) {
         setNewRow({ ...newRow, code: value });
-        setValidationError(null); // Limpiar error al cambiar el valor
+        setValidationError(null);
       } else {
         setValidationError('El código solo puede contener números y puntos. Ej: 1.1, 2.1.1');
       }
@@ -34,6 +37,10 @@ export function Page(): React.JSX.Element {
       setNewRow({ ...newRow, name: value });
     }
   };
+
+  const getAncestor = (i: number) => {
+    return codeParts.slice(0, i).join('.') + '.';
+  }
 
   const validateNewAccount = (newAccount: Account): boolean => {
     const { code } = newAccount;
@@ -54,9 +61,10 @@ export function Page(): React.JSX.Element {
     if (codeParts.length === 1) return true;  // Es de nivel raíz, no necesita validación de padres
     const ancestorCodes = [];
 
+
     // Generar todos los códigos de las cuentas padre
     for (let i = 1; i < codeParts.length; i++) {
-      const ancestorCode = codeParts.slice(0, i).join('.') + '.';
+      const ancestorCode = getAncestor(i);
       ancestorCodes.push(ancestorCode);
     }
 
@@ -90,7 +98,7 @@ export function Page(): React.JSX.Element {
     let parent_code: string | undefined = undefined;
 
     if (codeParts.length > 1) {
-      const parentCode = codeParts.slice(0, -1).join('.') + '.';
+      const parentCode = getAncestor(-1);
       const parentAccount = accounts.find(account => account.code === parentCode);
 
       if (parentAccount) {
@@ -108,6 +116,11 @@ export function Page(): React.JSX.Element {
     setEditedAccount(account); // Copiar los valores actuales a la cuenta editada
   };
 
+  const handleCancelClick = () => {
+    setEditRow(null); // Desactivar modo edición
+    setEditedAccount({}); // Limpiar valores temporales
+  }
+
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditedAccount({ ...editedAccount, [name]: value });
@@ -121,18 +134,6 @@ export function Page(): React.JSX.Element {
   if (isLoading) return <CircularProgress />;
   if (isError) return <Typography>Error al cargar las cuentas</Typography>;
 
-  // Ordenar cuentas numéricamente basadas en el código
-  const sortedAccounts = [...accounts].sort((a, b) => {
-    const aParts = a.code.split('.').map(Number);  // Convertir cada parte del código a número
-    const bParts = b.code.split('.').map(Number);
-
-    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
-      if (aParts[i] !== bParts[i]) {
-        return (aParts[i] || 0) - (bParts[i] || 0);  // Comparar parte por parte
-      }
-    }
-    return 0;
-  });
 
   return (
     <Box sx={{ maxWidth: 'var(--Content-maxWidth)', m: 'var(--Content-margin)', p: 'var(--Content-padding)', width: 'var(--Content-width)' }}>
@@ -177,7 +178,7 @@ export function Page(): React.JSX.Element {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedAccounts.map((account: Account) => (
+              {accounts.map((account: Account) => (
                 <TableRow key={account.code}>
                   {editRow === account.id?.toString() ? (
                     // Modo edición
@@ -201,7 +202,8 @@ export function Page(): React.JSX.Element {
                         />
                       </TableCell>
                       <TableCell>
-                        <Button onClick={() => handleSaveClick(account.id?.toString()!)}>Guardar</Button>
+                        <Button onClick={() => handleSaveClick(account.id?.toString()!)}><FloppyDiskIcon color='yellow' size={32}/></Button>
+                        <Button onClick={() => handleCancelClick()}>Salir</Button>
                       </TableCell>
                     </>
                   ) : (
@@ -210,7 +212,8 @@ export function Page(): React.JSX.Element {
                       <TableCell>{account.code}</TableCell>
                       <TableCell>{account.name}</TableCell>
                       <TableCell>
-                        <Button onClick={() => handleEditClick(account)}>Editar</Button>
+                        <Button onClick={() => handleEditClick(account)}><PencilSimpleIcon color='green' size={32} /></Button>
+                        <Button onClick={() => {}}>Borrar</Button>
                       </TableCell>
                     </>
                   )}

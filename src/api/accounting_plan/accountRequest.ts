@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import http from "../http";
 import { Account, } from "./account.types";
 
-const fetchAccountsRequest = async () => {
-    const response = await http.get('/accounts');
+const fetchAccountsRequest = async (offset: number, take: number) => {
+    const response = await http.get(`/accounts?offset=${offset}&take=${take}`);
     return response.data;
 };
 
@@ -20,10 +20,10 @@ const updateAccountRequest = (id: string, updatedAccount: Partial<Account>) => {
 //* Hooks
 
 // Obtener todas las cuentas
-export const useAccounts = () => {
+export const useAccounts = (offset: number, take: number) => {
     return useQuery<Account[]>({
         queryKey: ['accounts'],
-        queryFn: fetchAccountsRequest,
+        queryFn: () => fetchAccountsRequest(offset, take),
         onError: (error) => {
             console.error('Error al obtener las cuentas:', error);
         }
