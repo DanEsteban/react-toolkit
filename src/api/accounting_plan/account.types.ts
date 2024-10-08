@@ -1,17 +1,7 @@
 export interface Account {
-    id: number;
-    name: string;
+    id?: number; 
     code: string;
-    children?: Account[];
-}
-
-export interface CreateAccountData {
-name: string;
-code: string;
-parentId?: number;
-}
-
-export interface UpdateAccountData {
-name?: string;
-code?: string;
+    name: string;
+    level: number;
+    parent_code?: string;
 }

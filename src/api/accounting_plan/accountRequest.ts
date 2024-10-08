@@ -1,80 +1,60 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import http from "../http";
-import { Account, CreateAccountData, UpdateAccountData } from "./account.types";
+import { Account, } from "./account.types";
 
-
-export const AccountApiService = {
-    getAccountTree: async (): Promise<Account[]> => {
-        const response = await http.get('accounts');
-        return response.data;
-    },
-
-    getAccountById: async (id: number): Promise<Account> => {
-        const response = await http.get(`accounts/${id}`);
-        return response.data;
-    },
-
-    createAccount: async (data: CreateAccountData): Promise<Account> => {
-        const response = await http.post('accounts', data);
-        return response.data;
-    },
-
-    updateAccount: async (id: number, data: UpdateAccountData): Promise<Account> => {
-        const response = await http.put(`accounts/${id}`, data);
-        return response.data;
-    },
-
-    deleteAccount: async (id: number): Promise<boolean> => {
-        const response = await http.delete(`/accounts/${id}`);
-        return response.data;
-    },
+const fetchAccountsRequest = async () => {
+    const response = await http.get('/accounts');
+    return response.data;
 };
 
-// **Hooks de React Query**
 
-// Obtener el árbol completo de cuentas
-export const useAccountTree = () => {
-    return useQuery<Account[], Error>('accountTree', AccountApiService.getAccountTree);
+const addAccountRequest = (newAccount: Partial<Account>) => {
+    return http.post('/accounts', newAccount);
 };
 
-// Obtener una cuenta específica por ID
-export const useAccountById = (id: number) => {
-    return useQuery<Account, Error>(['account', id], () => AccountApiService.getAccountById(id));
+
+const updateAccountRequest = (id: string, updatedAccount: Partial<Account>) => {
+    return http.put(`/accounts/${id}`, updatedAccount);
 };
 
-// Crear una nueva cuenta
-export const useCreateAccount = () => {
-    const queryClient = useQueryClient();
-    return useMutation(AccountApiService.createAccount, {
-        onSuccess: () => {
-            // Invalida y refetch la lista de cuentas para obtener los datos actualizados
-            queryClient.invalidateQueries('accountTree');
-        },
+//* Hooks
+
+// Obtener todas las cuentas
+export const useAccounts = () => {
+    return useQuery<Account[]>({
+        queryKey: ['accounts'],
+        queryFn: fetchAccountsRequest,
+        onError: (error) => {
+            console.error('Error al obtener las cuentas:', error);
+        }
     });
 };
 
-// Actualizar una cuenta existente
-export const useUpdateAccount = () => {
+// Agregar una nueva cuenta
+export const useAddAccount = () => {
     const queryClient = useQueryClient();
-    return useMutation(
-        ({ id, data }: { id: number; data: UpdateAccountData }) =>
-            AccountApiService.updateAccount(id, data),
-        {
-            onSuccess: () => {
-                // Invalida y refetch la lista de cuentas
-                queryClient.invalidateQueries('accountTree');
-            },
+    return useMutation({
+        mutationKey: ['addAccount'],
+        mutationFn: addAccountRequest,
+        onSuccess: () => {
+            queryClient.invalidateQueries(['accounts']);
+        },
+        onError: (error) => {
+            console.error('Error al agregar una nueva cuenta:', error);
         }
-    );
+    });
 };
 
-// Eliminar una cuenta
-export const useDeleteAccount = () => {
+export const useUpdateAccount = () => {
     const queryClient = useQueryClient();
-    return useMutation((id: number) => AccountApiService.deleteAccount(id), {
+    return useMutation({
+        mutationKey: ['updateAccount'],
+        mutationFn: ({ id, updatedAccount }: { id: string; updatedAccount: Partial<Account> }) => updateAccountRequest(id, updatedAccount),
         onSuccess: () => {
-            // Invalida y refetch la lista de cuentas
-            queryClient.invalidateQueries('accountTree');
+            queryClient.invalidateQueries(['accounts']);
+        },
+        onError: (error) => {
+            console.error('Error al actualizar la cuenta:', error);
         },
     });
 };

@@ -3,139 +3,223 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { Plus, Plus as PlusIcon } from '@phosphor-icons/react/dist/ssr/Plus';
-import { useAccountTree, useCreateAccount, useDeleteAccount, useUpdateAccount } from '@/api/accounting_plan/accountRequest';
-import { useState } from 'react';
-import { CircularProgress, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, List, ListItem, ListItemText, TextField } from '@mui/material';
+import { useAccounts, useAddAccount, useUpdateAccount } from '@/api/accounting_plan/accountRequest';
 
 import { Account } from '@/api/accounting_plan/account.types';
-import { CaretDown } from '@phosphor-icons/react/dist/ssr/CaretDown';
-import { CaretRight } from '@phosphor-icons/react/dist/ssr/CaretRight';
-import { Trash } from '@phosphor-icons/react';
+import { CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
+
 
 export function Page(): React.JSX.Element {
-  const { data: accounts, error, isLoading } = useAccountTree();
-  // const createAccountMutation = useCreateAccount();
-  // const deleteAccountMutation = useDeleteAccount();
+  const { data: accounts = [], isLoading, isError } = useAccounts();
+  const { mutate: addAccount } = useAddAccount();
+  const { mutate: updateAccount } = useUpdateAccount(); // Mutación para actualizar cuenta
+
+  const [newRow, setNewRow] = React.useState<Account>({ code: '', name: '', level: 0 });
+  const [validationError, setValidationError] = React.useState<string | null>(null);
   
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<{ name: string; code: string; parentId?: number }>({
-    name: '',
-    code: '',
-    parentId: undefined,
-  });
+  const [editRow, setEditRow] = React.useState<string | null>(null); // Para editar
+  const [editedAccount, setEditedAccount] = React.useState<Partial<Account>>({}); // Valores temporales para edición
 
-  const [openAccounts, setOpenAccounts] = useState<{ [key: number]: boolean }>({});
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === 'code') {
+      const regex = /^[0-9.]*$/;
+      if (regex.test(value)) {
+        setNewRow({ ...newRow, code: value });
+        setValidationError(null); // Limpiar error al cambiar el valor
+      } else {
+        setValidationError('El código solo puede contener números y puntos. Ej: 1.1, 2.1.1');
+      }
+    } else if (name === 'name') {
+      setNewRow({ ...newRow, name: value });
+    }
+  };
 
-  // const handleCreateAccount = async () => {
-  //     await createAccountMutation.mutateAsync(formData);
-  //     setFormData({ name: '', code: '', parentId: undefined });
-  //     setDialogOpen(false);
-  // };
+  const validateNewAccount = (newAccount: Account): boolean => {
+    const { code } = newAccount;
+    if (accounts.some(account => account.code === code)) {
+      setValidationError(`Ya existe una cuenta con el código ${code}`);
+      return false;
+    }
 
-  // const handleDeleteAccount = (id: number) => {
-  //     deleteAccountMutation.mutate(id);
-  // };
+    if (code.endsWith('.')) {
+      const codeWithoutDot = code.slice(0, -1);
+      if (accounts.some(account => account.code === codeWithoutDot)) {
+        setValidationError(`Ya existe una cuenta con el código ${codeWithoutDot}. Debes editarla para agregar el punto.`);
+        return false;
+      }
+    }
 
-  // const handleToggle = (id: number) => {
-  //     setOpenAccounts((prev) => ({ ...prev, [id]: !prev[id] }));
-  // };
+    const codeParts = code.split('.').filter(Boolean);
+    if (codeParts.length === 1) return true;  // Es de nivel raíz, no necesita validación de padres
+    const ancestorCodes = [];
 
-  // const renderTree = (node: Account) => (
-  //   <div key={node.id}>
-  //       <ListItem onClick={() => handleToggle(node.id)}>
-  //           {openAccounts[node.id] ? (
-  //               <CaretDown size={20} />
-  //           ) : (
-  //               <CaretRight size={20} />
-  //           )}
-  //           <ListItemText primary={node.name} />
-  //           <Button onClick={(e) => { e.stopPropagation(); handleDeleteAccount(node.id); }}>
-  //               <Trash size={16} />
-  //           </Button>
-  //       </ListItem>
-  //       <Collapse in={openAccounts[node.id]} timeout="auto" unmountOnExit>
-  //           <List component="div" disablePadding>
-  //               {Array.isArray(node.children) && node.children.map(renderTree)}
-  //           </List>
-  //       </Collapse>
-  //   </div>
-  // );
+    // Generar todos los códigos de las cuentas padre
+    for (let i = 1; i < codeParts.length; i++) {
+      const ancestorCode = codeParts.slice(0, i).join('.') + '.';
+      ancestorCodes.push(ancestorCode);
+    }
+
+    // Verificar la existencia de cada cuenta padre
+    for (const ancestorCode of ancestorCodes) {
+      if (!accounts.some(account => account.code === ancestorCode)) {
+        setValidationError(`Falta la cuenta Padre: ${ancestorCode}`);
+        return false;
+      }
+    }
+
+    setValidationError(null);
+    return true;
+  };
+
+  const handleAddAccount = () => {
+    if (!newRow.code || !newRow.name) {
+      setValidationError('Tanto el código como el nombre son requeridos');
+      return;
+    }
+
+    if (!validateNewAccount(newRow)) {
+      return;
+    }
+
+    // Calcular el nivel de la cuenta basado en los puntos en el código
+    const level = (newRow.code.match(/\./g) || []).length - (newRow.code.endsWith('.') ? 1 : 0);
+
+    // Obtener el código del padre (todos los subniveles menos el último)
+    const codeParts = newRow.code.split('.').filter(Boolean);
+    let parent_code: string | undefined = undefined;
+
+    if (codeParts.length > 1) {
+      const parentCode = codeParts.slice(0, -1).join('.') + '.';
+      const parentAccount = accounts.find(account => account.code === parentCode);
+
+      if (parentAccount) {
+        parent_code = parentAccount.code;
+      }
+    }
+
+    addAccount({ ...newRow, parent_code, level });
+    setNewRow({ code: '', name: '', level: 0 });
+  };
+
+  // Funciones para edición
+  const handleEditClick = (account: Account) => {
+    setEditRow(account.id?.toString() || null); // Activar modo edición para esta fila
+    setEditedAccount(account); // Copiar los valores actuales a la cuenta editada
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditedAccount({ ...editedAccount, [name]: value });
+  };
+
+  const handleSaveClick = (id: string) => {
+    updateAccount({ id, updatedAccount: editedAccount });
+    setEditRow(null); // Desactivar modo edición
+  };
 
   if (isLoading) return <CircularProgress />;
-  if (error) return <Typography color="error">Error al cargar las cuentas</Typography>;
-    return (
-    <React.Fragment>
-      <Box
-        sx={{
-          maxWidth: 'var(--Content-maxWidth)',
-          m: 'var(--Content-margin)',
-          p: 'var(--Content-padding)',
-          width: 'var(--Content-width)',
-        }}
-      >
-        <Stack spacing={4}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ alignItems: 'flex-start' }}>
-            <Box sx={{ flex: '1 1 auto' }}>
-              <Typography variant="h4">Plan de Cuentas</Typography>
-            </Box>
-            <div>
-              <Button startIcon={<PlusIcon />} variant="contained">
-                Action
-              </Button>
-            </div>
-          </Stack>
-          <>
-            <Button variant="outlined" onClick={() => setDialogOpen(true)}>
-                <Plus size={20} /> Crear Cuenta
-            </Button>
-            {/* <List>
-                {accounts && accounts.map(renderTree)}
-            </List> */}
+  if (isError) return <Typography>Error al cargar las cuentas</Typography>;
 
-            {/* <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-                <DialogTitle>Crear Nueva Cuenta</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Nombre"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Código"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.code}
-                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="ID del Padre (opcional)"
-                        fullWidth
-                        variant="outlined"
-                        type="number"
-                        value={formData.parentId || ''}
-                        onChange={(e) => setFormData({ ...formData, parentId: Number(e.target.value) || undefined })}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDialogOpen(false)} color="primary">
-                        Cancelar
-                    </Button>
-                    <Button onClick={handleCreateAccount} color="primary">
-                        Crear
-                    </Button>
-                </DialogActions>
-            </Dialog> */}
-        </>
-        
+  // Ordenar cuentas numéricamente basadas en el código
+  const sortedAccounts = [...accounts].sort((a, b) => {
+    const aParts = a.code.split('.').map(Number);  // Convertir cada parte del código a número
+    const bParts = b.code.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      if (aParts[i] !== bParts[i]) {
+        return (aParts[i] || 0) - (bParts[i] || 0);  // Comparar parte por parte
+      }
+    }
+    return 0;
+  });
+
+  return (
+    <Box sx={{ maxWidth: 'var(--Content-maxWidth)', m: 'var(--Content-margin)', p: 'var(--Content-padding)', width: 'var(--Content-width)' }}>
+      <Stack spacing={4}>
+        <Typography variant="h4">Gestión de Cuentas</Typography>
+
+        {/* Formulario para agregar cuentas */}
+        <Stack direction="row" spacing={2}>
+          <TextField
+            label="Código"
+            name="code"
+            value={newRow.code}
+            onChange={handleInputChange}
+            variant="outlined"
+            size="small"
+            autoFocus
+          />
+          <TextField
+            label="Nombre"
+            name="name"
+            value={newRow.name}
+            onChange={handleInputChange}
+            variant="outlined"
+            size="small"
+          />
+          <Button variant="contained" color="primary" onClick={handleAddAccount}>
+            Agregar Cuenta
+          </Button>
         </Stack>
-      </Box>
-    </React.Fragment>
+
+        {/* Mensaje de error de validación */}
+        {validationError && <Typography color="error">{validationError}</Typography>}
+
+        {/* Tabla de cuentas dentro del InfiniteScroll */}
+        <TableContainer component={Paper} style={{ marginTop: '10px', maxHeight: 440 }}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell>Código</TableCell>
+                <TableCell>Nombre de la Cuenta</TableCell>
+                <TableCell>Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sortedAccounts.map((account: Account) => (
+                <TableRow key={account.code}>
+                  {editRow === account.id?.toString() ? (
+                    // Modo edición
+                    <>
+                      <TableCell>
+                        <TextField
+                          name="code"
+                          value={editedAccount.code}
+                          onChange={handleEditInputChange}
+                          variant="outlined"
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          name="name"
+                          value={editedAccount.name}
+                          onChange={handleEditInputChange}
+                          variant="outlined"
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button onClick={() => handleSaveClick(account.id?.toString()!)}>Guardar</Button>
+                      </TableCell>
+                    </>
+                  ) : (
+                    // Modo visualización
+                    <>
+                      <TableCell>{account.code}</TableCell>
+                      <TableCell>{account.name}</TableCell>
+                      <TableCell>
+                        <Button onClick={() => handleEditClick(account)}>Editar</Button>
+                      </TableCell>
+                    </>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Stack>
+    </Box>
   );
 }
