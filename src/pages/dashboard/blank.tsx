@@ -13,7 +13,11 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 
 
 export function Page(): React.JSX.Element {
-  const { data: accounts = [], isLoading, isError } = useAccounts(0, 100);
+  const { data, isLoading, isError,   fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage, } = useAccounts(0, 5);
+
+  const accounts = data?.pages?.flat() || [];
   const { mutate: addAccount } = useAddAccount();
   const { mutate: updateAccount } = useUpdateAccount(); // Mutación para actualizar cuenta
 
@@ -38,8 +42,8 @@ export function Page(): React.JSX.Element {
     }
   };
 
-  const getAncestor = (i: number) => {
-    return codeParts.slice(0, i).join('.') + '.';
+  const getAncestor = (i: number, codeParts: any[] | undefined) => {
+    return codeParts?.slice(0, i).join('.') + '.';
   }
 
   const validateNewAccount = (newAccount: Account): boolean => {
@@ -64,7 +68,7 @@ export function Page(): React.JSX.Element {
 
     // Generar todos los códigos de las cuentas padre
     for (let i = 1; i < codeParts.length; i++) {
-      const ancestorCode = getAncestor(i);
+      const ancestorCode = getAncestor(i, codeParts);
       ancestorCodes.push(ancestorCode);
     }
 
@@ -98,7 +102,7 @@ export function Page(): React.JSX.Element {
     let parent_code: string | undefined = undefined;
 
     if (codeParts.length > 1) {
-      const parentCode = getAncestor(-1);
+      const parentCode = getAncestor(-1, codeParts);
       const parentAccount = accounts.find(account => account.code === parentCode);
 
       if (parentAccount) {
@@ -168,7 +172,7 @@ export function Page(): React.JSX.Element {
         {validationError && <Typography color="error">{validationError}</Typography>}
 
         {/* Tabla de cuentas dentro del InfiniteScroll */}
-        <TableContainer component={Paper} style={{ marginTop: '10px', maxHeight: 440 }}>
+        <TableContainer component={Paper} style={{ marginTop: '10px', maxHeight: 440, scrollBehavior: 'auto' }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
@@ -178,7 +182,26 @@ export function Page(): React.JSX.Element {
               </TableRow>
             </TableHead>
             <TableBody>
-              {accounts.map((account: Account) => (
+            <InfiniteScroll
+            dataLength={data?.pages?.reduce((acc, page) => acc + page.length, 0) || 0}
+            next={fetchNextPage}
+            hasMore={hasNextPage || false}
+            loader={
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            }
+            endMessage={
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  No more data to load
+                </TableCell>
+              </TableRow>
+            }
+          >
+            {data?.pages.map((page) =>  page.map((account: Account) => (
                 <TableRow key={account.code}>
                   {editRow === account.id?.toString() ? (
                     // Modo edición
@@ -218,7 +241,8 @@ export function Page(): React.JSX.Element {
                     </>
                   )}
                 </TableRow>
-              ))}
+              )))}
+          </InfiniteScroll>
             </TableBody>
           </Table>
         </TableContainer>

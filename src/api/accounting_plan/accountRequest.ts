@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "react-query";
 import http from "../http";
 import { Account, } from "./account.types";
 
@@ -21,9 +21,12 @@ const updateAccountRequest = (id: string, updatedAccount: Partial<Account>) => {
 
 // Obtener todas las cuentas
 export const useAccounts = (offset: number, take: number) => {
-    return useQuery<Account[]>({
+    return useInfiniteQuery<Account[]>({
         queryKey: ['accounts'],
         queryFn: () => fetchAccountsRequest(offset, take),
+        getNextPageParam: (lastPage, allPages) => {
+            return lastPage.length < take ? undefined : allPages.length * take;      
+          },
         onError: (error) => {
             console.error('Error al obtener las cuentas:', error);
         }
