@@ -17,6 +17,9 @@ export function Page(): React.JSX.Element {
   const { mutate: updateAccount } = useUpdateAccount();
   const { mutate: deleteAccount } = useDeleteAccount();
 
+
+  
+
   const [validationError, setValidationError] = React.useState<string | null>(null);
 
   // Estado de edición

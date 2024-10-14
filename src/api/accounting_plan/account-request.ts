@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "react-query";
 import http from "../http";
 import { Account, } from "./account-types";
 
