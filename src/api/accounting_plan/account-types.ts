@@ -3,5 +3,5 @@ export interface Account {
     code: string;
     name: string;
     level: number;
-    parent_code?: string;
+    parent_code?: string ;
 }

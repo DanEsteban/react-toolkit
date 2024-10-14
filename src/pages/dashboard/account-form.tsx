@@ -1,17 +1,16 @@
 // AccountForm.tsx
 import React from 'react';
-import { Stack, TextField, Button, Alert } from '@mui/material';
-import { Account } from '@/api/accounting_plan/account.types';
+import { Stack, TextField, Button } from '@mui/material';
+import { Account } from '@/api/accounting_plan/account-types';
 
 
 interface AccountFormProps {
      onAddAccount: (newAccount: Account) => void;
-     validationError: string | null;
      onValidationError: (error: string | null) => void;
 }
 
-const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, validationError, onValidationError }) => {
-     const [newRow, setNewRow] = React.useState<Account>({ code: '', name: '', level: 0 });
+const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, onValidationError }) => {
+     const [newRow, setNewRow] = React.useState<Account>({ code: '', name: '', level: 0, parent_code: '' });
 
      const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           const { name, value } = e.target;
@@ -23,7 +22,12 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, validationError
                     
                } else {
                     onValidationError(null);
-                    setNewRow({ ...newRow, code: value });
+
+                    const codeParts = value.split('.').filter(Boolean);
+                    const level = codeParts.length - 1;
+                    const parent_code = level === 0 ? undefined  : codeParts.slice(0, codeParts.length - 1).join('.') + '.';
+
+                    setNewRow({ ...newRow, code: value, level, parent_code });
                }
           } else if (name === 'name') {
                setNewRow({ ...newRow, name: value });
@@ -63,7 +67,6 @@ const AccountForm: React.FC<AccountFormProps> = ({ onAddAccount, validationError
                <Button variant="contained" color="primary" onClick={handleSubmit}>
                     Agregar Cuenta
                </Button>
-               {validationError && <Alert severity="error">{validationError}</Alert>}
           </Stack>
      );
 };

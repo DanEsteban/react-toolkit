@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import http from "../http";
-import { Account, } from "./account.types";
+import { Account, } from "./account-types";
 
 const fetchAccountsRequest = async (offset: number, take: number) => {
     const response = await http.get(`/accounts?offset=${offset}&take=${take}`);
@@ -15,6 +15,10 @@ const addAccountRequest = (newAccount: Partial<Account>) => {
 
 const updateAccountRequest = (id: string, updatedAccount: Partial<Account>) => {
     return http.put(`/accounts/${id}`, updatedAccount);
+};
+
+const deleteAccountRequest = (id: string) => {
+    return http.delete(`/accounts/${id}`);
 };
 
 //* Hooks
@@ -55,6 +59,20 @@ export const useUpdateAccount = () => {
         },
         onError: (error) => {
             console.error('Error al actualizar la cuenta:', error);
+        },
+    });
+};
+
+export const useDeleteAccount = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationKey: ['deleteAccount'],
+        mutationFn: (id: string) => deleteAccountRequest(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['accounts']);
+        },
+        onError: (error) => {
+            console.error('Error al eliminar la cuenta:', error);
         },
     });
 };

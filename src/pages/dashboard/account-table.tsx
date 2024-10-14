@@ -1,10 +1,10 @@
 // AccountsTable.tsx
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
      Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Button, Paper,
 } from '@mui/material';
 import { PencilSimple, FloppyDisk, XCircle, Trash } from '@phosphor-icons/react';
-import { Account } from '@/api/accounting_plan/account.types';
+import { Account } from '@/api/accounting_plan/account-types';
 
 interface AccountsTableProps {
      accounts: Account[];
@@ -14,6 +14,8 @@ interface AccountsTableProps {
      setEditedAccount: (account: Partial<Account>) => void;
      onSaveEdit: (id: string, updatedAccount: Partial<Account>) => void;
      onCancelEdit: () => void;
+     onValidationError: (error: string | null) => void;
+     onDeleteAccount: (id: string) => void;
 }
 
 const AccountsTable: React.FC<AccountsTableProps> = ({
@@ -24,10 +26,25 @@ const AccountsTable: React.FC<AccountsTableProps> = ({
      setEditedAccount,
      onSaveEdit,
      onCancelEdit,
+     onValidationError,
+     onDeleteAccount
 }) => {
+     // Referencia al campo "code" cuando esté en edición
+     const codeInputRef = useRef<HTMLInputElement>(null);
 
      const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           const { name, value } = e.target;
+
+          if (name === 'code') {
+               const regex = /^[0-9.]*$/;
+               if (!regex.test(value)) {
+                    onValidationError('El código solo puede contener números y puntos. Ej: 1.1, 2.1.1');
+                    return;
+               } else {
+                    onValidationError(null);
+               }
+          }
+
           setEditedAccount({ ...editedAccount, [name]: value });
      };
 
@@ -40,6 +57,20 @@ const AccountsTable: React.FC<AccountsTableProps> = ({
           });
      };
 
+     const handleDeleteClick = (accountId: string) => {
+
+          if (window.confirm('¿Estás seguro de que quieres eliminar esta cuenta?')) {
+               onDeleteAccount(accountId);
+          }
+     };
+
+     //const isRootCode = (code: string) => /^[0-9]+\.$/.test(code);
+
+     useEffect(() => {
+          if (editRow && codeInputRef.current) {
+               codeInputRef.current.focus();
+          }
+     }, [editRow]);
 
      return (
           <TableContainer component={Paper} style={{ marginTop: '10px', maxHeight: 440 }}>
@@ -64,6 +95,8 @@ const AccountsTable: React.FC<AccountsTableProps> = ({
                                                             onChange={handleEditInputChange}
                                                             variant="outlined"
                                                             size="small"
+                                                            inputRef={codeInputRef}
+                                                       // disabled={isRootCode(account.code)}
                                                        />
                                                   </TableCell>
                                                   <TableCell>
@@ -90,7 +123,7 @@ const AccountsTable: React.FC<AccountsTableProps> = ({
                                                        <Button onClick={() => handleEditClick(account)}>
                                                             <PencilSimple color="blue" size={20} />
                                                        </Button>
-                                                       <Button onClick={() => handleEditClick(account)}>
+                                                       <Button onClick={() => handleDeleteClick(account.id?.toString()!)}>
                                                             <Trash color="red" size={20} />
                                                        </Button>
                                                   </TableCell>
