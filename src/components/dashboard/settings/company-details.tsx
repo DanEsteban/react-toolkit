@@ -48,26 +48,35 @@ export function CompanyDetails(): React.JSX.Element {
      });
 
      const [avatarSrc, setAvatarSrc] = React.useState(defaultValues.logo);
+     const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+     //const { mutate: updateEmpresa, isLoading } = useUpdateEmpresa();
 
-     const { mutate: updateEmpresa, isLoading } = useUpdateEmpresa();
+     const handleRemove = () => {
+          setAvatarSrc(""); // Clear the avatar source
+          if (fileInputRef.current) {
+               fileInputRef.current.value = ''; // Clear the file input value
+          }
+     };
 
      const onSubmit = (data: EmpresaResponseType) => {
-          //console.log('Formulario enviado:', data);
-          const id = 1; 
-          const updatedData = { ...data, logo: avatarSrc };
-          updateEmpresa(
-               { id, data: updatedData },
-               {
-                    onSuccess: () => {
-                         console.log('Empresa updated successfully');
-                         localStorage.setItem('empresa', JSON.stringify(updatedData));
-                    },
-                    onError: (error) => {
-                         console.error('Error updating empresa:', error);
-                    },
-               }
-          );
+          console.log('Formulario enviado:', data);
+          // const id = 1; 
+          // const updatedData = { ...data, logo: avatarSrc };
+          // updateEmpresa(
+          //      { id, data: updatedData },
+          //      {
+          //           onSuccess: () => {
+          //                console.log('Empresa updated successfully');
+          //                localStorage.setItem('empresa', JSON.stringify(updatedData));
+          //           },
+          //           onError: (error) => {
+          //                console.error('Error updating empresa:', error);
+          //           },
+          //      }
+          // );
      };
+
+
 
      return (
           <Card>
@@ -143,7 +152,7 @@ export function CompanyDetails(): React.JSX.Element {
                                              <Avatar src={avatarSrc} sx={{ '--Avatar-size': '100px' }} />
                                         </Box>
                                    </Box>
-                                   <Button color="secondary" size="small">
+                                   <Button color="secondary" size="small" onClick={handleRemove}>
                                         Remove
                                    </Button>
                               </Stack>
@@ -277,7 +286,8 @@ export function CompanyDetails(): React.JSX.Element {
                                              )}
                                         />
                                         <FormHelperText>
-                                             {`${watch('direccion', '').length}/400 characters`} {/* Dynamically track the value */}                                        </FormHelperText>
+                                             {`${watch('direccion', '').length}/400 characters`} {/* Dynamically track the value */}
+                                        </FormHelperText>
                                         <FormHelperText>{errors.direccion?.message}</FormHelperText> {/* Shows error if validation fails */}
                                    </FormControl>
                               </Stack>
