@@ -19,5 +19,6 @@ const empresaSlice = createSlice({
     },
 });
 
+
 export const { setSelectedEmpresa } = empresaSlice.actions;
 export default empresaSlice.reducer;

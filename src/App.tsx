@@ -17,7 +17,7 @@ function App() {
   }
 
   const { message, severity } = useSelector(
-    (state: RootState) => state.feedBackSlice
+    (state: RootState) => state.feedbackSlice
   );
 
   return (

@@ -20,6 +20,7 @@ const initialState: AuthState = {
      isAuthenticated: false,
 };
 
+
 const authSlice = createSlice({
      name: "auth",
      initialState,
@@ -32,13 +33,13 @@ const authSlice = createSlice({
                state.user = null;
                state.isAuthenticated = false;
           },
-          logout: (state) => {
-               state.user = null;
-               state.isAuthenticated = false;
-               localStorage.clear(); // Clear all related storage
-          },
+          // logout: (state) => {
+          //      state.user = null;
+          //      state.isAuthenticated = false;
+          //      localStorage.clear(); // Clear all related storage
+          // },
      },
 });
 
-export const { setUser, clearUser, logout } = authSlice.actions;
+export const { setUser, clearUser } = authSlice.actions;
 export default authSlice.reducer;
