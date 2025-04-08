@@ -1,7 +1,7 @@
 import { paths } from '@/paths';
 import { NavItemConfig } from '@/types/nav';
 
-// para agregar iconos hay que dirigirse al archivo nav-icons.tsx
+//TODO: para agregar iconos hay que dirigirse al archivo nav-icons.tsx
 
 const superadminNavItems: NavItemConfig[] = [
      {
@@ -21,6 +21,10 @@ const superadminNavItems: NavItemConfig[] = [
                     key: 'settings',
                     title: 'Ajustes',
                     href: paths.admin.settings.account,
+                    matcher: {
+                         type: 'startsWith',
+                         href: '/admin/dashboard/settings',
+                    }, 
                     icon: 'gear',
                },
           ],
