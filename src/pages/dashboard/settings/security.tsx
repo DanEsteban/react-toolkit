@@ -19,6 +19,7 @@ export function Security(): React.JSX.Element {
      const rowsPerPage = 10;
 
      const { data, refetch, isLoading, error } = useLoginHistory(page, rowsPerPage);
+     console.log(data)
      const { mutate: saveLogin } = useSaveLoginHistory();
 
      React.useEffect(() => {
@@ -63,7 +64,7 @@ export function Security(): React.JSX.Element {
 
      return (
           <Stack spacing={4}>
-               <Typography variant="h4">Security</Typography>
+               <Typography variant="h4">Seguridad</Typography>
                <LoginHistory
                     logins={data?.data || []}
                     total={data?.total || 0}
