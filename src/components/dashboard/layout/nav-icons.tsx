@@ -1,4 +1,4 @@
-import { BuildingOffice as BuildingOfficeIcon, TrendUp, Scales, ListNumbers } from '@phosphor-icons/react';
+import { BuildingOffice as BuildingOfficeIcon, TrendUp, Scales, ListNumbers, ChartBar } from '@phosphor-icons/react';
 import type { Icon } from '@phosphor-icons/react/dist/lib/types';
 import { AddressBook as AddressBookIcon } from '@phosphor-icons/react/dist/ssr/AddressBook';
 import { AlignLeft as AlignLeftIcon } from '@phosphor-icons/react/dist/ssr/AlignLeft';
@@ -53,7 +53,8 @@ export const icons = {
   'building-office' : BuildingOfficeIcon, 
   'trend-up': TrendUp,
   'scales': Scales, 
-  'list-numbers': ListNumbers,  
+  'list-numbers': ListNumbers, 
+  'chart-bar': ChartBar , 
   cube: CubeIcon,
   file: FileIcon,
   gear: GearIcon,

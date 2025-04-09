@@ -6,11 +6,13 @@ export interface MayorGeneralMovimiento {
      debe: number;
      haber: number;
      saldo: number;
+
 }
 
 export interface MayorGeneralCuenta {
      cuenta: string; // ejemplo: "1.1.1.01 Caja General"
      saldoInicial: number;
+     tipoSaldoInicial: string;
      movimientos: MayorGeneralMovimiento[];
 }
 

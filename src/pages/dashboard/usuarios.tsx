@@ -96,7 +96,6 @@ export function Usuarios(): React.JSX.Element {
 
             } else {
                 // Si es un nuevo usuario, crea
-                console.log(data)
                 await createUsuarioByEmpresa({ empresaId: Number(empresaId), data });
                 dispatch(
                     setFeedback({
@@ -113,7 +112,7 @@ export function Usuarios(): React.JSX.Element {
             handleCloseDialog();
         } catch (error: any) {
             console.error(error);
-            let mensajeError = error.mensaje || "Ocurrió un error desconocido."; // Usa un mensaje predeterminado si no hay mensaje
+            let mensajeError = error.message || "Ocurrió un error desconocido."; // Usa un mensaje predeterminado si no hay mensaje
             dispatch(
                 setFeedback({
                     message: mensajeError,

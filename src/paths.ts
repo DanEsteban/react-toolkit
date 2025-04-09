@@ -56,7 +56,8 @@ export const paths = {
           empresas: '/admin/dashboard/empresas',
           usuarios: '/admin/dashboard/usuarios',
           settings: {
-               account: '/admin/dashboard/settings/account'
+               account: '/admin/dashboard/settings/account',
+               security: '/admin/dashboard/settings/security'
           }
      },
      dashboard: {

@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/state/store';
 import BusinessIcon from '@mui/icons-material/Business';
 import { resetEmpresaState } from '@/state/slices/empresaSlice';
+import { useLocation } from 'react-router-dom';
 
 export interface UserPopoverProps {
   anchorEl: null | Element;
@@ -29,12 +30,13 @@ export interface UserPopoverProps {
 }
 
 export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): React.JSX.Element {
+  const location = useLocation();
   const dispatch = useDispatch();
-
   const user = useSelector((state: RootState) => state.authSlice.user);
   const selectEmpresa = useSelector((state: RootState) => state.empresaSlice.selectedEmpresa);
-  const hasMultipleEmpresas = (user?.empresas ?? []).length > 1;
 
+  const isAdmin = location.pathname.startsWith('/admin');
+  const hasMultipleEmpresas = (user?.empresas ?? []).length > 1;
   return (
     <Popover
       anchorEl={anchorEl}
@@ -50,58 +52,97 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
           {user?.email}
         </Typography>
       </Box>
+      
       <Divider />
-      <List sx={{ p: 1 }}>
 
-        {user?.systemRole === 'superadmin' ? (
-          <MenuItem
-            component={RouterLink}
-            href="/admin/dashboard/empresas"
-            onClick={() => {
-              dispatch(resetEmpresaState());
-              localStorage.removeItem('selectedEmpresa');
-              onClose?.();
-            }}
-          >
-            <ListItemIcon>
-              <BusinessIcon />
-            </ListItemIcon>
-            Empresas
-          </MenuItem>
-        ) : (
-          hasMultipleEmpresas && (
+      <List sx={{ p: 1 }}>
+        {isAdmin ? (
+          <>
             <MenuItem
               component={RouterLink}
-              href="/empresa"
-              onClick={() => {
-                dispatch(resetEmpresaState());
-                localStorage.removeItem('selectedEmpresa');
-                onClose?.();
-              }}
+              href={paths.admin.settings.account}
+              onClick={onClose}
             >
               <ListItemIcon>
-                <BusinessIcon />
+                <UserIcon />
               </ListItemIcon>
-              Empresas
+              Cuenta
             </MenuItem>
-          )
-        )}
 
-        <MenuItem component={RouterLink} href={paths.dashboard.settings.account(selectEmpresa.id)} onClick={onClose}>
-          <ListItemIcon>
-            <UserIcon />
-          </ListItemIcon>
-          Cuenta
-        </MenuItem>
-        <MenuItem component={RouterLink} href={paths.dashboard.settings.security(selectEmpresa.id)} onClick={onClose}>
-          <ListItemIcon>
-            <LockKeyIcon />
-          </ListItemIcon>
-          Seguridad
-        </MenuItem>
-        
+            <MenuItem
+              component={RouterLink}
+              href={paths.admin.settings.security}
+              onClick={onClose}
+            >
+              <ListItemIcon>
+                <LockKeyIcon />
+              </ListItemIcon>
+              Seguridad
+            </MenuItem>
+          </>
+        ) : (
+          <>
+            {user?.systemRole === 'superadmin' ? (
+              <MenuItem
+                component={RouterLink}
+                href="/admin/dashboard/empresas"
+                onClick={() => {
+                  dispatch(resetEmpresaState());
+                  localStorage.removeItem('selectedEmpresa');
+                  onClose?.();
+                }}
+              >
+                <ListItemIcon>
+                  <BusinessIcon />
+                </ListItemIcon>
+                Empresas
+              </MenuItem>
+            ) : (
+              hasMultipleEmpresas && (
+                <MenuItem
+                  component={RouterLink}
+                  href="/empresa"
+                  onClick={() => {
+                    dispatch(resetEmpresaState());
+                    localStorage.removeItem('selectedEmpresa');
+                    onClose?.();
+                  }}
+                >
+                  <ListItemIcon>
+                    <BusinessIcon />
+                  </ListItemIcon>
+                  Empresas
+                </MenuItem>
+              )
+            )}
+
+            <MenuItem
+              component={RouterLink}
+              href={paths.dashboard.settings.account(selectEmpresa.id)}
+              onClick={onClose}
+            >
+              <ListItemIcon>
+                <UserIcon />
+              </ListItemIcon>
+              Cuenta
+            </MenuItem>
+
+            <MenuItem
+              component={RouterLink}
+              href={paths.dashboard.settings.security(selectEmpresa.id)}
+              onClick={onClose}
+            >
+              <ListItemIcon>
+                <LockKeyIcon />
+              </ListItemIcon>
+              Seguridad
+            </MenuItem>
+          </>
+        )}
       </List>
+
       <Divider />
+
       <Box sx={{ p: 1 }}>
         {config.auth.strategy === AuthStrategy.CUSTOM ? <CustomSignOut /> : null}
       </Box>

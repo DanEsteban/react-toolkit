@@ -96,7 +96,6 @@ const createUsuarioByEmpresaRequest = async (empresaId: number, data: UsuarioReq
      try {
 
           const token = getAuthToken();
-          console.log(token)
           const response = await http.post(`usuario/empresa/${empresaId}`, data, {
                headers: {
                     Authorization: `Bearer ${token}`,
@@ -116,6 +115,7 @@ const createUsuarioByEmpresaRequest = async (empresaId: number, data: UsuarioReq
           return handleError(error);
      }
 };
+
 export const useCreateUsuarioByEmpresa = () => {
      const queryClient = useQueryClient();
      return useMutation({

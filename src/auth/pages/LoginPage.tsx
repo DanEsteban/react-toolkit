@@ -41,7 +41,6 @@ export default function LoginPage() {
                const { tokens, ...userData } = response.data;
 
                localStorage.setItem('token', tokens);
-
                dispatch(setUser(userData));
                dispatch(setJustLoggedIn(true));
                navigate('/empresa');

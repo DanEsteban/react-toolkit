@@ -16,13 +16,18 @@ export function Security(): React.JSX.Element {
      const justLoggedIn = useSelector((state: RootState) => state.authSlice.justLoggedIn);
 
      const [page, setPage] = React.useState(0);
-     const rowsPerPage = 10;
+     const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-     const { data, refetch, isLoading, error } = useLoginHistory(page, rowsPerPage);
+     const { data, refetch, isLoading, error } = useLoginHistory();
      const { mutate: saveLogin } = useSaveLoginHistory();
 
+     //console.log(data)
+
+     const loginSavedRef = React.useRef(false);
+
      React.useEffect(() => {
-          if (user?.id && justLoggedIn) {
+          if (user?.id && justLoggedIn && !loginSavedRef.current) {
+               loginSavedRef.current = true;
                saveLogin(
                     {
                          userId: user.id,
@@ -33,14 +38,19 @@ export function Security(): React.JSX.Element {
                               refetch()
                               dispatch(setJustLoggedIn(false));
                          },
-                         onError: (err) => console.error('Error al guardar login:', err),
+                         onError: (err) => console.error('Error al guardar los datos de login:', err),
                     }
                );
           }
-     }, [user, justLoggedIn]);
+     }, [user?.id, justLoggedIn]);
 
-     const handlePageChange = (newPage: number) => {
+     const handlePageChange = (_event: unknown, newPage: number) => {
           setPage(Math.max(0, newPage));
+     };
+
+     const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+          setRowsPerPage(parseInt(event.target.value, 10));
+          setPage(0);
      };
 
      if (isLoading) {
@@ -63,13 +73,14 @@ export function Security(): React.JSX.Element {
 
      return (
           <Stack spacing={4}>
-               <Typography variant="h4">Security</Typography>
+               <Typography variant="h4">Seguridad</Typography>
                <LoginHistory
-                    logins={data?.data || []}
+                    logins={data || []}
                     total={data?.total || 0}
                     page={page}
                     rowsPerPage={rowsPerPage}
                     onPageChange={handlePageChange}
+                    onRowsPerPageChange={handleRowsPerPageChange}
                />
           </Stack>
      );

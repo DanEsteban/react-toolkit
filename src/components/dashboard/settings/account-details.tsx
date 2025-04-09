@@ -17,6 +17,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUpdateUsuarioByEmpresa } from '@/api/user-request';
 import { setFeedback } from '@/state/slices/feedBackSlice';
+import { logout } from '@/state/actions/logout';
 
 export function AccountDetails(): React.JSX.Element {
      const dispatch = useDispatch();
@@ -55,6 +56,23 @@ export function AccountDetails(): React.JSX.Element {
           try {
                await updateUsuarioByEmpresa({ empresaId: Number(empresaId), userId: user.id, data });
 
+               if (data.password) {
+                    // Si el usuario cambió la contraseña, cerramos sesión
+                    localStorage.removeItem('token'); 
+                    dispatch(logout()); 
+
+                    dispatch(
+                         setFeedback({
+                              message: "Contraseña actualizada. Por favor, inicia sesión nuevamente.",
+                              severity: "success",
+                              isError: false,
+                         })
+                    );
+
+                    return; 
+               }
+
+               // Si NO cambió contraseña, solo mostramos mensaje normal
                dispatch(
                     setFeedback({
                          message: "Usuario actualizado con éxito",
@@ -64,9 +82,10 @@ export function AccountDetails(): React.JSX.Element {
                );
 
                console.log("Datos enviados:", data);
+
           } catch (error: any) {
                console.error("Error al actualizar usuario:", error);
-               let mensajeError = error.mensaje || "Ocurrió un error desconocido."; // Usa un mensaje predeterminado si no hay mensaje
+               let mensajeError = error.message || "Ocurrió un error desconocido.";
                dispatch(
                     setFeedback({
                          message: mensajeError,
@@ -78,7 +97,7 @@ export function AccountDetails(): React.JSX.Element {
      };
 
      // Regresar a la página anterior
-     const handleCancel = () => navigate(-1); 
+     const handleCancel = () => navigate(-1);
      // const handleCancel = () => {
      //     navigate('../../');
      // };
@@ -153,7 +172,6 @@ export function AccountDetails(): React.JSX.Element {
                                         )}
                                    />
 
-                                   {/* BOTONES DENTRO DEL FORM PARA QUE FUNCIONE EL SUBMIT */}
                                    <CardActions sx={{ justifyContent: 'flex-end', mt: 2 }}>
                                         <Button color="secondary" onClick={handleCancel}>Cancelar</Button>
                                         <Button type="submit" variant="contained">Guardar Cambios</Button>

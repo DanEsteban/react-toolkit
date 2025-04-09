@@ -136,48 +136,78 @@ const MayorGeneralPDF: React.FC<Props> = ({
                          </View>
                     </View>
 
-                    {data.map((cuenta, index) => (
-                         <View key={index}>
-                              <Text style={styles.cuentaTitulo}>{cuenta.cuenta}</Text>
+                    {data.map((cuenta, index) => {
+                         // Calcular totales de la cuenta
+                         const totalDebe = cuenta.movimientos.reduce((sum, m) => sum + (m.debe || 0), 0);
+                         const totalHaber = cuenta.movimientos.reduce((sum, m) => sum + (m.haber || 0), 0);
 
-                              <View style={styles.tableHeader}>
-                                   <Text style={[styles.col, styles.colFecha]}>Fecha</Text>
-                                   <Text style={[styles.col, styles.colAsiento]}>Asiento</Text>
-                                   <Text style={[styles.col, styles.colDescripcion]}>Descripción</Text>
-                                   <Text style={[styles.col, styles.colNota]}>Nota</Text>
-                                   <Text style={[styles.col, styles.colDebe]}>Debe</Text>
-                                   <Text style={[styles.col, styles.colHaber]}>Haber</Text>
-                                   <Text style={[styles.col, styles.colSaldo]}>Saldo</Text>
-                              </View>
+                         return (
+                              <View key={index}>
+                                   <Text style={styles.cuentaTitulo}>{cuenta.cuenta}</Text>
 
-                              {/* Fila SALDO ANTERIOR */}
-                              <View style={styles.row}>
-                                   <Text style={[styles.col, styles.colFecha]}>-</Text>
-                                   <Text style={[styles.col, styles.colAsiento]}>-</Text>
-                                   <Text style={[styles.col, styles.colDescripcion]}>SALDO ANTERIOR</Text>
-                                   <Text style={[styles.col, styles.colNota]}>-</Text>
-                                   <Text style={[styles.col, styles.colDebe]}>-</Text>
-                                   <Text style={[styles.col, styles.colHaber]}>-</Text>
-                                   <Text style={[styles.col, styles.colSaldo]}>
-                                        {cuenta.saldoInicial.toFixed(2)}
-                                   </Text>
-                              </View>
-
-                              {cuenta.movimientos.map((m, i) => (
-                                   <View key={i} style={styles.row}>
-                                        <Text style={[styles.col, styles.colFecha]}>
-                                             {format(new Date(m.fecha), 'yyyy-MM-dd')}
-                                        </Text>
-                                        <Text style={[styles.col, styles.colAsiento]}>{m.nro_asiento}</Text>
-                                        <Text style={[styles.col, styles.colDescripcion]}>{m.descripcion}</Text>
-                                        <Text style={[styles.col, styles.colNota]}>{m.nota || '-'}</Text>
-                                        <Text style={[styles.col, styles.colDebe]}>{m.debe.toFixed(2)}</Text>
-                                        <Text style={[styles.col, styles.colHaber]}>{m.haber.toFixed(2)}</Text>
-                                        <Text style={[styles.col, styles.colSaldo]}>{m.saldo.toFixed(2)}</Text>
+                                   <View style={styles.tableHeader}>
+                                        <Text style={[styles.col, styles.colFecha]}>Fecha</Text>
+                                        <Text style={[styles.col, styles.colAsiento]}>Asiento</Text>
+                                        <Text style={[styles.col, styles.colDescripcion]}>Descripción</Text>
+                                        <Text style={[styles.col, styles.colNota]}>Nota</Text>
+                                        <Text style={[styles.col, styles.colDebe]}>Debe</Text>
+                                        <Text style={[styles.col, styles.colHaber]}>Haber</Text>
+                                        <Text style={[styles.col, styles.colSaldo]}>Saldo</Text>
                                    </View>
-                              ))}
-                         </View>
-                    ))}
+
+                                   {/* Fila SALDO ANTERIOR */}
+                                   <View style={styles.row}>
+                                        <Text style={[styles.col, styles.colFecha]}>-</Text>
+                                        <Text style={[styles.col, styles.colAsiento]}>-</Text>
+                                        <Text style={[styles.col, styles.colDescripcion]}>SALDO ANTERIOR</Text>
+                                        <Text style={[styles.col, styles.colNota]}>-</Text>
+                                        <Text style={[styles.col, styles.colDebe]}>
+                                             {cuenta.tipoSaldoInicial === 'DEUDOR' ? cuenta.saldoInicial.toFixed(2) : '-'}
+                                        </Text>
+                                        <Text style={[styles.col, styles.colHaber]}>
+                                             {cuenta.tipoSaldoInicial === 'ACREEDOR' ? cuenta.saldoInicial.toFixed(2) : '-'}
+                                        </Text>
+                                        <Text style={[styles.col, styles.colSaldo]}>
+                                             {cuenta.tipoSaldoInicial === 'DEUDOR'
+                                                  ? cuenta.saldoInicial.toFixed(2)
+                                                  : `-${cuenta.saldoInicial.toFixed(2)}`}
+                                        </Text>
+                                   </View>
+
+                                   {cuenta.movimientos.map((m, index) => (
+                                        <View key={index} style={styles.row}>
+                                             <Text style={[styles.col, styles.colFecha]}>
+                                                  {format(new Date(m.fecha), 'yyyy-MM-dd')}
+                                             </Text>
+                                             <Text style={[styles.col, styles.colAsiento]}>{m.nro_asiento}</Text>
+                                             <Text style={[styles.col, styles.colDescripcion]}>{m.descripcion}</Text>
+                                             <Text style={[styles.col, styles.colNota]}>{m.nota || '-'}</Text>
+                                             <Text style={[styles.col, styles.colDebe]}>{m.debe.toFixed(2)}</Text>
+                                             <Text style={[styles.col, styles.colHaber]}>{m.haber.toFixed(2)}</Text>
+                                             <Text style={[styles.col, styles.colSaldo]}>{m.saldo.toFixed(2)}</Text>
+                                        </View>
+                                   ))}
+
+                                   {/* Fila de Totales */}
+                                   <View style={styles.row}>
+                                        <Text style={[styles.col, styles.colFecha]}></Text>
+                                        <Text style={[styles.col, styles.colAsiento]}></Text>
+                                        <Text style={[styles.col, styles.colDescripcion, { fontWeight: 'bold' }]}>
+                                             TOTAL
+                                        </Text>
+                                        <Text style={[styles.col, styles.colNota]}></Text>
+                                        <Text style={[styles.col, styles.colDebe, { fontWeight: 'bold' }]}>
+                                             {totalDebe.toFixed(2)}
+                                        </Text>
+                                        <Text style={[styles.col, styles.colHaber, { fontWeight: 'bold' }]}>
+                                             {totalHaber.toFixed(2)}
+                                        </Text>
+                                        <Text style={[styles.col, styles.colSaldo]}></Text>
+                                   </View>
+                              </View>
+                         );
+                    })}
+
 
                     <Text style={styles.footer}>
                          Este documento es una representación impresa del Mayor General. VJOB © {new Date().getFullYear()}
