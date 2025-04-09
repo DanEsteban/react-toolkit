@@ -10,8 +10,11 @@ interface LoginHistoryProps {
      total: number;
      page: number;
      rowsPerPage: number;
-     onPageChange: (page: number) => void;
+     onPageChange: (event: unknown, newPage: number) => void;
+     onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
+
+
 
 export default function LoginHistory({
      logins,
@@ -19,11 +22,8 @@ export default function LoginHistory({
      page,
      rowsPerPage,
      onPageChange,
+     onRowsPerPageChange,
 }: LoginHistoryProps): React.JSX.Element {
-
-     const handleChangePage = (_: unknown, newPage: number) => {
-          onPageChange(Math.max(0, newPage));
-     };
 
      return (
           <Card>
@@ -41,36 +41,43 @@ export default function LoginHistory({
                               <Table stickyHeader>
                                    <TableHead>
                                         <TableRow>
-                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>Inicio de Sesión</TableCell>
-                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>Dirección IP</TableCell>
-                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>Agente de Usuario</TableCell>
+                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>Usuario</TableCell>
+                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>Fecha y Hora</TableCell>
+                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>IP</TableCell>
+                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>Ubicacion</TableCell>
+                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>Navegador/SO</TableCell>
+                                             <TableCell sx={{ backgroundColor: '#fafafa' }}>Dispositivo</TableCell>
                                         </TableRow>
                                    </TableHead>
                                    <TableBody>
                                         {logins.map((login) => (
                                              <TableRow key={login.id}>
-                                                  <TableCell>
+                                                  {/* <TableCell>
                                                        <Box display="flex" flexDirection="column">
                                                             <Typography variant="subtitle2">{login.userName}</Typography>
                                                             <Typography variant="body2" color="textSecondary">
                                                             {formatLoginDate(login.timestamp)}                                                            </Typography>
                                                        </Box>
-                                                  </TableCell>
+                                                  </TableCell> */}
+                                                  <TableCell>{login.userName}</TableCell>
+                                                  <TableCell>{formatLoginDate(login.timestamp)}</TableCell>
                                                   <TableCell>{login.ip}</TableCell>
+                                                  <TableCell>{login.location}</TableCell>
                                                   <TableCell>{login.browser}, {login.os}</TableCell>
+                                                  <TableCell>{login.deviceType}</TableCell>
                                              </TableRow>
                                         ))}
                                    </TableBody>
                               </Table>
                          </TableContainer>
                          <TablePagination
-                              rowsPerPageOptions={[rowsPerPage]}
                               component="div"
                               count={total}
-                              rowsPerPage={rowsPerPage}
                               page={page}
-                              onPageChange={handleChangePage}
-                              onRowsPerPageChange={() => { }}
+                              rowsPerPage={rowsPerPage}
+                              onPageChange={onPageChange}
+                              onRowsPerPageChange={onRowsPerPageChange}
+                              rowsPerPageOptions={[5, 10, 25]} // Opciones estándar
                          />
                     </Paper>
                </CardContent>
