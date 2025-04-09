@@ -98,6 +98,13 @@ const styles = StyleSheet.create({
           borderTopColor: '#e2e8f0',
           paddingTop: 5,
      },
+     totalRow: {
+          backgroundColor: '#f0f0f0', // fondo gris claro
+     },
+     totalText: {
+          fontWeight: 'bold',
+          textAlign: 'right',
+     },
 });
 
 const MayorGeneralPDF: React.FC<Props> = ({
@@ -138,9 +145,8 @@ const MayorGeneralPDF: React.FC<Props> = ({
 
                     {data.map((cuenta, index) => {
                          // Calcular totales de la cuenta
-                         const totalDebe = cuenta.movimientos.reduce((sum, m) => sum + (m.debe || 0), 0);
-                         const totalHaber = cuenta.movimientos.reduce((sum, m) => sum + (m.haber || 0), 0);
-
+                         const totalDebe = cuenta.movimientos.reduce((sum, m) => sum + (m.debe || 0), 0) + (cuenta.tipoSaldoInicial === 'DEUDOR' ? cuenta.saldoInicial : 0);
+                         const totalHaber = cuenta.movimientos.reduce((sum, m) => sum + (m.haber || 0), 0) + (cuenta.tipoSaldoInicial === 'ACREEDOR' ? cuenta.saldoInicial : 0);
                          return (
                               <View key={index}>
                                    <Text style={styles.cuentaTitulo}>{cuenta.cuenta}</Text>
@@ -188,18 +194,19 @@ const MayorGeneralPDF: React.FC<Props> = ({
                                         </View>
                                    ))}
 
+
                                    {/* Fila de Totales */}
-                                   <View style={styles.row}>
+                                   <View style={[styles.row, styles.totalRow]}>
                                         <Text style={[styles.col, styles.colFecha]}></Text>
                                         <Text style={[styles.col, styles.colAsiento]}></Text>
-                                        <Text style={[styles.col, styles.colDescripcion, { fontWeight: 'bold' }]}>
+                                        <Text style={[styles.col, styles.colDescripcion, styles.totalText]}>
                                              TOTAL
                                         </Text>
                                         <Text style={[styles.col, styles.colNota]}></Text>
-                                        <Text style={[styles.col, styles.colDebe, { fontWeight: 'bold' }]}>
+                                        <Text style={[styles.col, styles.colDebe, styles.totalText]}>
                                              {totalDebe.toFixed(2)}
                                         </Text>
-                                        <Text style={[styles.col, styles.colHaber, { fontWeight: 'bold' }]}>
+                                        <Text style={[styles.col, styles.colHaber, styles.totalText]}>
                                              {totalHaber.toFixed(2)}
                                         </Text>
                                         <Text style={[styles.col, styles.colSaldo]}></Text>
