@@ -17,9 +17,11 @@ export function getErrorMessage(error: unknown): string {
 }
 
 // Obtener todos los asientos
-const getAsientos = async (empresa_id: number) => {
+const getAsientos = async (empresa_id: number) => { 
   try {
-    const response = await http.get(`asientos?empresa_id=${empresa_id}`);
+    const response = await http.get('asientos', {
+      params: { empresa_id },
+    });
     return response.data;
   } catch (error) {
     throw new Error(getErrorMessage(error));
@@ -33,9 +35,9 @@ export const useAsientos = (empresa_id: number) => {
     onError: (error) => {
       console.error(getErrorMessage(error));
     },
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    staleTime: 1000 * 60 * 5, // Considera los datos frescos por 5 minutos
+    enabled: !!empresa_id,
+    staleTime: 1000 * 60 * 5,
+    cacheTime: 1000 * 60 * 10,
   });
 };
 
