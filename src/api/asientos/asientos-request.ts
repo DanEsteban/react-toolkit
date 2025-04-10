@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import http from "../http";
-import { Asiento } from "./asientos-types";
+import { Asiento, CreateAsientoDto } from "./asientos-types";
 import { AxiosError } from "axios";
 
 // Función mejorada para obtener mensajes de error
@@ -66,7 +66,7 @@ export const useAsiento = (id: number, empresa_id: number) => {
 };
 
 // Crear un asiento
-const createAsiento = async (data: Asiento) => {
+const createAsiento = async (data: CreateAsientoDto) => {
   try {
     const response = await http.post("/asientos", data);
     return response.data;
@@ -77,20 +77,16 @@ const createAsiento = async (data: Asiento) => {
 
 export const useCreateAsiento = (
   empresa_id: number,
-  onSuccessF: () => void,
-  onErrorF: (error: string) => void
 ) => {
   const queryClient = useQueryClient();
-
-  return useMutation(createAsiento, {
+  return useMutation({
+    mutationKey: ['CreateAsiento'],
+    mutationFn: createAsiento,
     onSuccess: () => {
-      queryClient.invalidateQueries(["asientos", empresa_id], { refetchActive: true });
-      onSuccessF();
-      console.log("Asiento creado exitosamente");
+      queryClient.invalidateQueries(['asientos', empresa_id]);
     },
     onError: (error) => {
       const errorMessage = getErrorMessage(error);
-      onErrorF(errorMessage);
     },
   });
 };

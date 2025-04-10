@@ -276,11 +276,11 @@ export function AsientosForm({
       };
 
       if (id) {
-        await updateAsiento({
-          id: Number(id),
-          data: dataToSend,
-          empresa_id: selectedEmpresa.id,
-        });
+        // await updateAsiento({
+        //   id: Number(id),
+        //   data: dataToSend,
+        //   empresa_id: selectedEmpresa.id,
+        // });
       } else {
         await createAsiento(dataToSend);
       }

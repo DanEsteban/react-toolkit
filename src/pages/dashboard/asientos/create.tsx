@@ -4,6 +4,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { AsientosForm } from "../../../components/dashboard/asientos/asientos-form";
+import { AsientosFormMejorada } from "@/components/dashboard/asientos/asientos-form-mejorada";
 
 export function AsientosCreate(): React.JSX.Element {
   return (
@@ -22,7 +23,8 @@ export function AsientosCreate(): React.JSX.Element {
               <Typography variant="h4">Asiento Diario Contable</Typography>
             </div>
           </Stack>
-          <AsientosForm />
+          {/* <AsientosForm /> */}
+          <AsientosFormMejorada />
         </Stack>
       </Box>
     </React.Fragment>
